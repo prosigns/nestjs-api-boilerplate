@@ -1,4 +1,4 @@
-# Enterprise API Boilerplate
+# Enterprise Nest Js API Boilerplate
 
 An enterprise-grade NestJS API boilerplate with built-in features for modern backend applications, developed by [Prosigns](https://www.prosignstech.com/).
 
@@ -106,9 +106,9 @@ This API boilerplate offers a flexible database architecture that allows you to 
 
 ### Supported Databases
 
-1. **PostgreSQL** (via Prisma ORM)
-2. **MongoDB** (via Mongoose ODM)
-3. **MySQL** (via TypeORM)
+1. **PostgreSQL** (via Prisma ORM) - Default and fully functional
+2. **MongoDB** (via Mongoose ODM) - Temporarily disabled, falls back to PostgreSQL
+3. **MySQL** (via TypeORM) 
 4. **Supabase** (via Supabase SDK)
 
 ### How to Configure
@@ -131,6 +131,8 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/api
 MONGODB_URI=mongodb://username:password@localhost:27017/api
 ```
 
+> **Note:** MongoDB support is temporarily disabled in the current implementation. When MongoDB is selected, the system will fall back to using PostgreSQL. This is being addressed in an upcoming update.
+
 #### MySQL
 ```
 MYSQL_HOST=localhost
@@ -151,51 +153,60 @@ SUPABASE_KEY=your-supabase-anon-key
 
 The multi-database architecture uses:
 
-- **Repository Pattern**: Generic interface for database operations
-- **Factory Pattern**: Selects the appropriate repository implementation at runtime
+- **Repository Pattern**: Generic interface for database operations through `BaseRepository<T>`
+- **Factory Pattern**: Selects the appropriate repository implementation at runtime via `UserRepositoryFactory`
 - **Database-specific implementations**: Each database provider has its own implementation of the repository interface
 
-This abstraction allows the application to switch between database providers without changing business logic code.
+This abstraction allows the application to switch between database providers by simply changing the `DATABASE_TYPE` environment variable, without modifying any business logic code.
+
+### Current Implementation Status
+
+- **PostgreSQL**: Fully implemented and functioning as the default database
+- **MongoDB**: Implementation is complete but currently disabled due to connection issues; falls back to PostgreSQL
+- **MySQL**: Implementation is complete through TypeORM
+- **Supabase**: Implementation is complete through Supabase SDK
+
+To switch databases, change the `DATABASE_TYPE` value in your `.env` file and ensure the corresponding connection details are properly configured.
 
 ## Project Structure
 
 ```
-├── prisma/                # Prisma schema and migrations
+├── prisma/                     # Prisma schema and migrations
 ├── src/
-│   ├── common/            # Common code shared across the application
-│   │   ├── database/      # Database abstraction layer
-│   │   │   ├── repository/# Repository interfaces and implementations
-│   │   │   ├── supabase/  # Supabase service
-│   │   │   ├── typeorm/   # TypeORM service
-│   │   ├── decorators/    # Custom decorators
-│   │   ├── filters/       # Exception filters
-│   │   ├── guards/        # Authentication and authorization guards
-│   │   ├── interceptors/  # Request/response interceptors
-│   │   ├── middleware/    # HTTP middleware
-│   │   ├── prisma/        # Prisma service
-│   ├── config/            # Application configuration
-│   ├── modules/           # Feature modules
-│   │   ├── auth/          # Authentication module
-│   │   ├── files/         # File upload module
-│   │   ├── health/        # Health check module
-│   │   ├── users/         # User management module
-│   │   │   ├── repositories/ # Database repositories for users
-│   │   │   ├── schemas/   # MongoDB schemas
-│   │   │   ├── entities/  # Entities for different ORMs
-│   ├── app.controller.ts  # Main app controller
-│   ├── app.module.ts      # Main app module
-│   ├── app.service.ts     # Main app service
-│   ├── main.ts            # Application entry point
-├── test/                  # End-to-end tests
-├── .env                   # Environment variables
-├── .eslintrc.js           # ESLint configuration
-├── .prettierrc            # Prettier configuration
-├── docker-compose.yml     # Docker Compose configuration
-├── Dockerfile             # Docker configuration
-├── jest.config.js         # Jest configuration
-├── nest-cli.json          # NestJS CLI configuration
-├── package.json           # Dependencies and scripts
-└── tsconfig.json          # TypeScript configuration
+│   ├── common/                 # Common code shared across the application
+│   │   ├── database/           # Database abstraction layer
+│   │   │   ├── repository/     # Repository interfaces and implementations
+│   │   │   ├── supabase/       # Supabase service
+│   │   │   ├── typeorm/        # TypeORM service
+│   │   ├── decorators/         # Custom decorators
+│   │   ├── filters/            # Exception filters
+│   │   ├── guards/             # Authentication and authorization guards
+│   │   ├── interceptors/       # Request/response interceptors
+│   │   ├── middleware/         # HTTP middleware
+│   │   ├── prisma/             # Prisma service
+│   ├── config/                 # Application configuration
+│   ├── modules/                # Feature modules
+│   │   ├── auth/               # Authentication module
+│   │   ├── files/              # File upload module
+│   │   ├── health/             # Health check module
+│   │   ├── users/              # User management module
+│   │   │   ├── repositories/   # Database repositories for users
+│   │   │   ├── schemas/        # MongoDB schemas
+│   │   │   ├── entities/       # Entities for different ORMs
+│   ├── app.controller.ts       # Main app controller
+│   ├── app.module.ts           # Main app module
+│   ├── app.service.ts          # Main app service
+│   ├── main.ts                 # Application entry point
+├── test/                       # End-to-end tests
+├── .env                        # Environment variables
+├── .eslintrc.js                # ESLint configuration
+├── .prettierrc                 # Prettier configuration
+├── docker-compose.yml          # Docker Compose configuration
+├── Dockerfile                  # Docker configuration
+├── jest.config.js              # Jest configuration
+├── nest-cli.json               # NestJS CLI configuration
+├── package.json                # Dependencies and scripts
+└── tsconfig.json               # TypeScript configuration
 ```
 
 ## Testing
