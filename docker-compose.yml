@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: enterprise-api
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+      - mongodb
+      - mysql
+      - redis
+    environment:
+      - NODE_ENV=development
+      - DATABASE_TYPE=postgres
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/api
+      - MONGODB_URI=mongodb://root:password@mongodb:27017/api
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=api
+      - MYSQL_SYNCHRONIZE=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - backend-network
+
+  postgres:
+    image: postgres:latest
+    container_name: enterprise-postgres
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: api
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: enterprise-mongodb
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: api
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - backend-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: enterprise-mysql
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: api
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  redis:
+    image: redis:alpine
+    container_name: enterprise-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: enterprise-rabbitmq
+    restart: always
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - backend-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  mysql_data:
+  redis_data:
+  rabbitmq-data:
+
+networks:
+  backend-network:
+    driver: bridge 

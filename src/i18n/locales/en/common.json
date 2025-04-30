@@ -1,0 +1,26 @@
+{
+  "welcome": "Welcome to Enterprise API",
+  "goodbye": "Goodbye",
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "passwordReset": "Password Reset"
+  },
+  "users": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "management": "User Management"
+  },
+  "actions": {
+    "create": "Create",
+    "update": "Update",
+    "delete": "Delete",
+    "view": "View",
+    "upload": "Upload",
+    "download": "Download",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save"
+  }
+} 

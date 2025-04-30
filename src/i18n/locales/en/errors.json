@@ -1,0 +1,27 @@
+{
+  "general": {
+    "serverError": "An internal server error occurred",
+    "notFound": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Forbidden access",
+    "badRequest": "Bad request"
+  },
+  "auth": {
+    "invalidCredentials": "Invalid email or password",
+    "emailExists": "Email already exists",
+    "invalidToken": "Invalid or expired token",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "validation": {
+    "required": "This field is required",
+    "minLength": "Minimum length is {{length}} characters",
+    "maxLength": "Maximum length is {{length}} characters",
+    "invalidEmail": "Invalid email format",
+    "invalidPassword": "Password must contain at least 8 characters, including uppercase, lowercase, and numbers"
+  },
+  "files": {
+    "uploadFailed": "File upload failed",
+    "invalidType": "Invalid file type",
+    "maxSize": "File size exceeds the limit of {{size}}MB"
+  }
+} 
