@@ -50,7 +50,7 @@ For more information, visit [prosignstech.com](https://www.prosignstech.com/) or
 
 1. Clone the repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/prosigns/nestjs-api-boilerplate.git
 cd nestjs-api-boilerplate
 ```
 
