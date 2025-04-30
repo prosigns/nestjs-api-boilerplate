@@ -51,7 +51,7 @@ For more information, visit [prosignstech.com](https://www.prosignstech.com/) or
 1. Clone the repository
 ```bash
 git clone <repository-url>
-cd enterprise-api
+cd nestjs-api-boilerplate
 ```
 
 2. Install dependencies
