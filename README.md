@@ -2,7 +2,7 @@
 
 An enterprise-grade NestJS API boilerplate with built-in features for modern backend applications, developed by [Prosigns](https://www.prosignstech.com/).
 
-## About Prosigns Technologies
+## About Prosigns
 
 Prosigns Technologies is a leading provider of custom software development services in the USA, Canada, and Middle East. With a team of 135+ tech innovators, Prosigns specializes in:
 
