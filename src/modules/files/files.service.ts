@@ -6,7 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { FileEntity } from './entities/file.entity';
-import { createWriteStream, unlink, existsSync, mkdirSync } from 'fs';
+import { unlink, existsSync, mkdirSync, promises as fsPromises } from 'fs';
 import { join, basename, extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -54,9 +54,7 @@ export class FilesService {
       );
 
       // Save the file
-      const writeStream = createWriteStream(filePath);
-      writeStream.write(file.buffer);
-      writeStream.end();
+      await fsPromises.writeFile(filePath, file.buffer);
 
       // Save file info in the database
       const fileEntity = await this.prisma.file.create({

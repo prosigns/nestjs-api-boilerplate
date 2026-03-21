@@ -1,6 +1,6 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
@@ -12,6 +12,8 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-store';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { I18nModule } from './i18n/i18n.module';
+import { I18nMiddleware } from './common/middleware/i18n.middleware';
 
 // Feature modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -93,6 +95,9 @@ import { HealthModule } from './modules/health/health.module';
     
     // Database
     PrismaModule,
+
+    // i18n
+    I18nModule,
     
     // Feature modules
     AuthModule,
@@ -108,6 +113,10 @@ import { HealthModule } from './modules/health/health.module';
       useClass: AllExceptionsFilter,
     },
     {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
@@ -115,6 +124,6 @@ import { HealthModule } from './modules/health/health.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Removed I18nMiddleware
+    consumer.apply(I18nMiddleware).forRoutes('*');
   }
 }

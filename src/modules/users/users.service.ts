@@ -84,6 +84,15 @@ export class UsersService {
     await this.userRepository.update(userId, data);
   }
 
+  /**
+   * Returns the stored refresh token hash for comparison during refresh flows.
+   * (The public `User` entity constructor strips refreshToken for API responses.)
+   */
+  async getRefreshTokenHash(userId: string): Promise<string | null> {
+    const userRecord = await this.userRepository.findOne(userId);
+    return userRecord?.refreshToken ?? null;
+  }
+
   async validateUser(email: string, password: string): Promise<User | null> {
     try {
       const user = await this.userRepository.findByField('email', email);

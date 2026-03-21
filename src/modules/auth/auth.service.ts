@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -40,6 +41,8 @@ export class AuthService {
     try {
       const createUserDto: CreateUserDto = {
         ...registerDto,
+        // Prevent public users from role escalation by overwriting any provided role.
+        role: Role.USER,
       };
 
       const user = await this.usersService.create(createUserDto);
@@ -60,11 +63,30 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get('auth.jwtRefreshSecret'),
       });
-      
-      // Check if token is valid for this user
+
+      // Check if this refresh token matches the stored (bcrypt-hashed) refresh token.
+      const storedRefreshTokenHash =
+        await this.usersService.getRefreshTokenHash(payload.sub);
+
+      if (!storedRefreshTokenHash) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const isMatch = await bcrypt.compare(
+        refreshToken,
+        storedRefreshTokenHash,
+      );
+
+      if (!isMatch) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
       const user = await this.usersService.findOne(payload.sub);
-      
-      // Generate new tokens
+
+      if (!user?.isActive) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
       return this.generateTokens(user);
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
