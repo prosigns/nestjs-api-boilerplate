@@ -22,7 +22,7 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     try {
       return await this.usersService.validateUser(email, password);
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -47,11 +47,11 @@ export class AuthService {
 
       const user = await this.usersService.create(createUserDto);
       return this.generateTokens(user);
-    } catch (error) {
-      if (error.message.includes('already exists')) {
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('already exists')) {
         throw new BadRequestException('User with this email already exists');
       }
-      throw error;
+      throw err;
     }
   }
 
@@ -88,7 +88,7 @@ export class AuthService {
       }
 
       return this.generateTokens(user);
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

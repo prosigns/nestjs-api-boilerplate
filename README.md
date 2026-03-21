@@ -26,25 +26,27 @@ For more information, visit [prosigns.io](https://www.prosigns.io/) or contact:
   - **MongoDB** (Mongoose) — repository layer present; Mongo path currently falls back to Prisma when selected
   - **MySQL** (TypeORM) — optional user repository implementation
   - **Supabase** — optional user repository via Supabase client
-- **Configuration**: NestJS `ConfigModule` with typed namespaces (`app`, `database`, `auth`, `redis`, `files`, `messaging`)
-- **Logging & errors**: Winston logging, global exception filter (including Prisma error mapping)
+- **Configuration**: NestJS `ConfigModule` with typed namespaces + **Joi env validation** at startup (`src/config/env.validation.ts`)
+- **Logging & errors**: Winston logging, **request IDs** (`X-Request-Id`), global exception filter; **sanitized error messages in production** (no stack/DB details to clients)
 - **Validation**: `class-validator` / `class-transformer` with a strict global `ValidationPipe`
 - **API versioning**: URI versioning with default version `v1` (e.g. `/api/v1/...`)
 - **API documentation**: Swagger / OpenAPI (non-production)
-- **Rate limiting**: `@nestjs/throttler` (global guard)
-- **Caching**: Redis via `@nestjs/cache-manager` (configure `REDIS_HOST` / `REDIS_PORT`)
-- **File uploads**: Multipart uploads with metadata in Prisma and files on disk
-- **Security**: Helmet, CORS, compression
+- **Rate limiting**: `@nestjs/throttler` (global guard; **health routes skipped**; limits configurable via env)
+- **Caching**: Redis when `REDIS_ENABLED=true`, otherwise **in-memory** cache (no Redis required for local dev)
+- **File uploads**: Owner-scoped files (`userId`), **MIME allowlist**, path traversal checks on read/delete
+- **Security**: Helmet, **configurable CORS** (`CORS_ORIGINS`), compression, graceful shutdown hooks
 - **Internationalization**: `i18next` + middleware for `Accept-Language` / `?lang=`
 - **Testing**: Jest (unit + e2e)
 - **Docker**: `Dockerfile` (Node 20 Alpine) and `docker-compose.yml`
 - **Linting**: ESLint 9 flat config (`eslint.config.js`)
+- **Observability**: Prometheus metrics at `/api/v1/metrics` (no auth); optional OpenTelemetry traces when `OTEL_ENABLED=true` (standard `OTEL_*` variables)
+- **Dependency automation**: Dependabot (npm + GitHub Actions); `npm run audit` in CI (report-only step)
 
 ## Requirements
 
 - **Node.js 20+** and npm (see `engines` in `package.json`)
 - **PostgreSQL** when using Prisma (default setup)
-- **Redis** if you rely on the global cache module (defaults to `localhost:6379`)
+- **Redis** optional — set `REDIS_ENABLED=false` to run without Redis (in-memory cache)
 - **Docker** (optional) for containerized run or CI-style workflows
 
 ## Getting started
@@ -67,15 +69,18 @@ Minimum for local development with PostgreSQL:
 
 | Variable | Description |
 |----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string for Prisma |
-| `JWT_SECRET` | Secret for signing access tokens |
-| `JWT_REFRESH_SECRET` | Secret for signing refresh tokens |
+| `DATABASE_URL` | PostgreSQL connection string for Prisma (**required** when `NODE_ENV=production`) |
+| `JWT_SECRET` / `JWT_REFRESH_SECRET` | Signing secrets (**required** in production; **min 32 characters** each) |
 | `JWT_EXPIRES_IN` | Access token TTL (default `15m`) |
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token TTL (default `7d`) |
-| `REDIS_HOST` / `REDIS_PORT` | Redis for cache (optional; defaults `localhost` / `6379`) |
+| `CORS_ORIGINS` | `*` or comma-separated origins (use explicit origins in production) |
+| `REDIS_ENABLED` | `true` / `false` — use in-memory cache when `false` |
+| `REDIS_HOST` / `REDIS_PORT` | Redis host/port when `REDIS_ENABLED=true` |
+| `THROTTLE_TTL` / `THROTTLE_LIMIT` | Global rate limit window (seconds) and max requests per window |
+| `ALLOWED_UPLOAD_MIME_TYPES` | Comma-separated MIME types; empty = built-in defaults (images + PDF) |
 | `DATABASE_TYPE` | `postgres` (default), `mongodb`, `supabase`, or `mysql` for user repository selection |
 | `PORT` | HTTP port (default `3000`) |
-| `NODE_ENV` | `development` / `production` (Swagger disabled in production) |
+| `NODE_ENV` | `development` / `production` / `test` (Swagger disabled in production) |
 
 See `src/config/configuration.ts` for all supported env keys.
 
@@ -122,7 +127,8 @@ docker compose up -d
 
 Examples:
 
-- Health: `GET /api/v1/health`
+- **Liveness**: `GET /api/v1/health` or `GET /api/v1/health/live` (process up; not rate-limited)
+- **Readiness**: `GET /api/v1/health/ready` (checks database connectivity; use for orchestrators)
 - Auth: `POST /api/v1/auth/login`, `POST /api/v1/auth/register`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`
 
 **Swagger** (when `NODE_ENV !== production`):
@@ -130,6 +136,14 @@ Examples:
 ```
 http://localhost:3000/api/docs
 ```
+
+**Prometheus** (process metrics; scrape without JWT):
+
+```
+http://localhost:3000/api/v1/metrics
+```
+
+**OpenTelemetry**: set `OTEL_ENABLED=true` and configure exporters (e.g. `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`). Traces are initialized before the Nest app boots (`src/telemetry/`).
 
 ## Multi-database support (users)
 

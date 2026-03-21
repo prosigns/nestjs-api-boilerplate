@@ -45,4 +45,25 @@ describe('HealthController (e2e)', () => {
         expect(res.body).toHaveProperty('env');
       });
   });
+
+  it('/api/v1/health/ready (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/health/ready')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('status', 'ok');
+        expect(res.body).toHaveProperty('checks');
+        expect(res.body.checks).toHaveProperty('database', 'up');
+      });
+  });
+
+  it('/api/v1/metrics (GET) — Prometheus scrape without auth', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/metrics')
+      .expect(200)
+      .expect('Content-Type', /text\/plain/)
+      .expect((res) => {
+        expect(res.text).toMatch(/# HELP|process_/);
+      });
+  });
 }); 

@@ -3,6 +3,8 @@ import { registerAs } from '@nestjs/config';
 export const appConfig = registerAs('app', () => ({
   port: parseInt(process.env.PORT || '3000', 10),
   environment: process.env.NODE_ENV || 'development',
+  /** Comma-separated origins, or `*` to reflect any origin (dev only recommended) */
+  corsOrigins: process.env.CORS_ORIGINS || '*',
 }));
 
 export const databaseConfig = registerAs('database', () => ({
@@ -27,12 +29,23 @@ export const authConfig = registerAs('auth', () => ({
 }));
 
 export const redisConfig = registerAs('redis', () => ({
+  enabled: process.env.REDIS_ENABLED !== 'false',
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379', 10),
 }));
 
 export const filesConfig = registerAs('files', () => ({
   uploadDestination: process.env.UPLOAD_DESTINATION || './uploads',
+  /** Comma-separated list; if empty, FilesService uses a safe default set */
+  allowedMimeTypes: process.env.ALLOWED_UPLOAD_MIME_TYPES || '',
+}));
+
+export const throttleConfig = registerAs('throttle', () => ({
+  ttl: parseInt(process.env.THROTTLE_TTL || '60', 10),
+  limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
+  /** Stricter bucket for auth routes (login / register / refresh) */
+  authTtl: parseInt(process.env.THROTTLE_AUTH_TTL || '60', 10),
+  authLimit: parseInt(process.env.THROTTLE_AUTH_LIMIT || '5', 10),
 }));
 
 export const messagingConfig = registerAs('messaging', () => ({
@@ -45,5 +58,6 @@ export default [
   authConfig,
   redisConfig,
   filesConfig,
+  throttleConfig,
   messagingConfig,
 ]; 

@@ -7,13 +7,17 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
+    private readonly configService: ConfigService,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
@@ -40,14 +44,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
         : (response as Record<string, any>).message || exception.message;
       error = exception.name;
     } else if (exception instanceof PrismaClientKnownRequestError) {
-      // Handle Prisma errors
       status = HttpStatus.BAD_REQUEST;
-      message = this.handlePrismaError(exception);
       error = 'Database Error';
+      message = this.isProduction()
+        ? 'A database error occurred'
+        : this.handlePrismaError(exception);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'Internal Server Error';
       error = 'Internal Server Error';
+      message = this.isProduction()
+        ? 'An unexpected error occurred'
+        : exception instanceof Error
+          ? exception.message
+          : 'Internal Server Error';
     }
 
     const responseBody = {
@@ -56,6 +65,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
       error,
       message,
+      ...(this.isProduction()
+        ? {}
+        : {
+            requestId: (ctx.getRequest() as { requestId?: string }).requestId,
+          }),
     };
 
     httpAdapter.reply(ctx.getResponse(), responseBody, status);
@@ -70,5 +84,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       default:
         return `Database error: ${error.message}`;
     }
+  }
+
+  private isProduction(): boolean {
+    return this.configService.get<string>('app.environment') === 'production';
   }
 } 

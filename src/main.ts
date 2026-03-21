@@ -1,3 +1,5 @@
+import './telemetry/sdk-init';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -10,7 +12,6 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // Set up Winston logger for initial application bootstrap
   const logger = WinstonModule.createLogger({
     transports: [
       new winston.transports.Console({
@@ -23,59 +24,73 @@ async function bootstrap() {
     ],
   });
 
-  const app = await NestFactory.create(AppModule, {
-    logger,
-  });
+  try {
+    const app = await NestFactory.create(AppModule, {
+      logger,
+    });
 
-  const configService = app.get(ConfigService);
-  const port = configService.get('app.port');
-  const environment = configService.get('app.environment');
+    app.enableShutdownHooks();
 
-  // Global prefix for all routes
-  app.setGlobalPrefix('api');
+    const configService = app.get(ConfigService);
+    const port = configService.get<number>('app.port');
+    const environment = configService.get<string>('app.environment');
+    const corsOrigins = configService.get<string>('app.corsOrigins') || '*';
 
-  // Enable API versioning
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
+    app.setGlobalPrefix('api');
 
-  // Set up CORS
-  app.use(cors());
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+    });
 
-  // Set up Helmet for security headers
-  app.use(helmet());
+    const origin =
+      corsOrigins === '*'
+        ? true
+        : corsOrigins.split(',').map((o) => o.trim()).filter(Boolean);
 
-  // Set up compression
-  app.use(compression());
+    app.use(
+      cors({
+        origin,
+        credentials: true,
+      }),
+    );
 
-  // Set up validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Strip properties that do not have any decorators
-      forbidNonWhitelisted: true, // Throw error if non-whitelisted properties are present
-      transform: true, // Automatically transform payloads to DTO instances
-      transformOptions: {
-        enableImplicitConversion: true, // Enable implicit type conversion
-      },
-    }),
-  );
+    app.use(helmet());
+    app.use(compression());
 
-  // Set up Swagger documentation
-  if (environment !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('Enterprise API')
-      .setDescription('Enterprise-grade API documentation')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('docs', app, document);
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
+
+    if (environment !== 'production') {
+      const config = new DocumentBuilder()
+        .setTitle('Enterprise API')
+        .setDescription('Enterprise-grade API documentation')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .build();
+      const document = SwaggerModule.createDocument(app, config);
+      SwaggerModule.setup('docs', app, document);
+    }
+
+    await app.listen(port ?? 3000);
+    logger.log(
+      `Application is running on port ${port} in ${environment} mode`,
+    );
+  } catch (error) {
+    logger.error(
+      `Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`,
+      error instanceof Error ? error.stack : undefined,
+    );
+    process.exit(1);
   }
-
-  // Start the server
-  await app.listen(port);
-  logger.log(`Application is running on port ${port} in ${environment} mode`);
 }
 
 bootstrap();
