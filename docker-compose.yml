@@ -11,37 +11,29 @@ services:
       - '3000:3000'
     depends_on:
       - postgres
-      - mongodb
-      - mysql
       - redis
     environment:
-      - NODE_ENV=development
-      - DATABASE_TYPE=postgres
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/api
-      - MONGODB_URI=mongodb://root:password@mongodb:27017/api
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USERNAME=root
-      - MYSQL_PASSWORD=password
-      - MYSQL_DATABASE=api
-      - MYSQL_SYNCHRONIZE=true
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      NODE_ENV: development
+      DATABASE_TYPE: postgres
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/api
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-must-be-at-least-32-chars!!}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-at-least-32-chars!!}
     volumes:
       - ./uploads:/app/uploads
     networks:
       - backend-network
 
   postgres:
-    image: postgres:latest
+    image: postgres:15-alpine
     container_name: enterprise-postgres
     restart: always
     ports:
       - '5432:5432'
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: api
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -49,7 +41,7 @@ services:
       - backend-network
 
   mongodb:
-    image: mongo:latest
+    image: mongo:7
     container_name: enterprise-mongodb
     restart: always
     ports:
@@ -78,7 +70,7 @@ services:
       - backend-network
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     container_name: enterprise-redis
     restart: always
     ports:

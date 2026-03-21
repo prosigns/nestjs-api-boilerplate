@@ -16,6 +16,9 @@ export class FileEntity {
   @ApiProperty({ description: 'File size in bytes' })
   size: number;
 
+  @ApiProperty({ description: 'Owner user id' })
+  userId: string;
+
   @ApiProperty({ description: 'Creation date' })
   createdAt: Date;
 
