@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 
 @Injectable()
@@ -28,6 +29,10 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     const refreshToken = req.headers.authorization?.replace('Bearer ', '').trim();
     const { sub: id } = payload;
 
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -36,6 +41,18 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       throw new UnauthorizedException('Invalid token');
     }
 
-    return { ...user, refreshToken };
+    // Verify that the presented refresh token matches the stored bcrypt hash.
+    const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!isMatch || !user.isActive) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    // Only return safe fields for authorization guards.
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    };
   }
 } 

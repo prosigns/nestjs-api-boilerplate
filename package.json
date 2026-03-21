@@ -4,6 +4,9 @@
   "description": "An enterprise-grade NestJS API boilerplate with built-in features for modern backend applications, developed by Prosigns.",
   "author": "Prosigns",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "license": "",
   "scripts": {
     "build": "nest build",
