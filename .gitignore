@@ -37,3 +37,4 @@ lerna-debug.log*
 # Uploads
 /uploads/*
 !/uploads/.gitkeep
+.gitignore
