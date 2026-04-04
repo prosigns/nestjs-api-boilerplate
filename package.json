@@ -45,7 +45,7 @@
     "@opentelemetry/sdk-trace-node": "^2.6.1",
     "@opentelemetry/semantic-conventions": "^1.40.0",
     "@prisma/client": "^7.6.0",
-    "@supabase/supabase-js": "^2.100.1",
+    "@supabase/supabase-js": "^2.101.1",
     "@willsoto/nestjs-prometheus": "^6.1.0",
     "amqplib": "^0.10.9",
     "bcrypt": "^6.0.0",
