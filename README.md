@@ -15,8 +15,8 @@ Prosigns offers services across diverse industries including SaaS, Healthcare, F
 
 For more information, visit [prosigns.io](https://www.prosigns.io/) or contact:
 
-- Email: services@prosigns.io
-- US: +1 945 229 2333
+- Email: hello@prosigns.io
+- US: +1 332 241 7790
 
 ## Features
 
