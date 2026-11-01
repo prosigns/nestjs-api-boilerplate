@@ -30,11 +30,12 @@ lerna-debug.log*
 # IDE - VSCode
 
 # Environment variables
-.env
-.env.*
 !.env.example
 
 # Uploads
 /uploads/*
 !/uploads/.gitkeep
 .gitignore
+
+# IDE - VSCode
+config.bat
